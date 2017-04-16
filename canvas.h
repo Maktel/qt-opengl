@@ -9,6 +9,9 @@ class Canvas : public QWidget {
  public:
   explicit Canvas(QWidget* parent = 0);
 
+  void loadFile(QString file_name);
+  void saveFile(QString file_name);
+
  protected:
   // overloaded methods of QWidget
   //  virtual void keyPressEvent(QKeyEvent*) override;
