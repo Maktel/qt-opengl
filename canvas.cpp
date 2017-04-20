@@ -90,6 +90,10 @@ void Canvas::setShear(qreal _shear_x, qreal _shear_y, bool _shear_inplace) {
   settings.shear_inplace = _shear_inplace;
 }
 
+void Canvas::setInterpolation(InterpolationType _type) {
+  settings.interpolation_type = _type;
+}
+
 void Canvas::keyPressEvent(QKeyEvent* e) {
   switch (e->key()) {
     case 'X':

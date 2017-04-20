@@ -25,6 +25,8 @@ enum class FillType { scanline, stack, recursive };
 
 enum class Transform { shift, rotate, scale, shear };
 
+enum class InterpolationType { nearest, bilinear };
+
 struct Settings {
   int width;
   int height;
@@ -43,6 +45,7 @@ struct Settings {
   QColor main_color;
   int circle_steps;
   QColor debug_color;
+  InterpolationType interpolation_type;
 
   int shift_x;
   int shift_y;
@@ -71,7 +74,7 @@ struct Settings {
     fill_type = FillType::scanline;
     start_color = QColor(255, 0, 0);
     end_color = QColor(128, 0, 255);
-    main_color = QColor(0, 255, 0);
+    main_color = QColor(0, 0, 255);
     circle_steps = 15;
     debug_color = QColor(0, 255, 0);
 
@@ -115,6 +118,7 @@ struct Settings {
     dbg.nospace() << "\nshear_x: " << sett.shear_x;
     dbg.nospace() << "\nshear_y: " << sett.shear_y;
     dbg.nospace() << "\nshear_inplace: " << sett.shear_inplace;
+    dbg.nospace() << "\ninterpolation_type: " << int(sett.interpolation_type);
 
     return dbg;
   }
@@ -144,6 +148,7 @@ class Canvas : public QWidget {
   void setRotate(qreal _rotation_angle, bool _rotate_inplace);
   void setScale(qreal _scale_x, qreal _scale_y, bool _scale_inplace);
   void setShear(qreal _shear_x, qreal _shear_y, bool _shear_inplace);
+  void setInterpolation(InterpolationType _type);
 
   Settings settings;  // public, use as read only
  protected:

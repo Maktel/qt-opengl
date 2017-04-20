@@ -342,13 +342,8 @@ void MainWindow::changeScale() {
         QString::number(zoom_slider.value() * 1.0 / multiplier, 'g', 2));
   });
 
-  QDialogButtonBox buttons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
-                           Qt::Horizontal, &dialog);
-  buttons.setCenterButtons(true);
-  form.addRow(&buttons);
 
-  connect(&buttons, SIGNAL(accepted()), &dialog, SLOT(accept()));
-  connect(&buttons, SIGNAL(rejected()), &dialog, SLOT(reject()));
+  form.addWidget(new DialogStandardButtons(&dialog));
 
   if (dialog.exec() == QDialog::Accepted) {
     canvas->setScale(zoom_slider.value() * 1.0 / multiplier);
@@ -594,6 +589,20 @@ void MainWindow::settingsTr() {
 
   form.addWidget(&shear);
 
+  form.addWidget(new Separator());
+
+  // INTERPOLATION
+  ButtonBox<InterpolationType> interpolation(
+      tr("Interpolation function used by transformations: "),
+      canvas->settings.interpolation_type);
+  interpolation.addButton(tr("Nearest neighbour (worst quality, fastest)"),
+                          InterpolationType::nearest);
+  interpolation.addButton(tr("Bilinear (better quality, slower)"),
+                          InterpolationType::bilinear);
+  interpolation.initializeChecked();
+
+  form.addWidget(&interpolation);
+
 
   form.addRow(new DialogStandardButtons(&dialog));
 
@@ -605,6 +614,7 @@ void MainWindow::settingsTr() {
                      scale.checkboxes[0]->isChecked());
     canvas->setShear(shear.doubles[0]->value(), shear.doubles[1]->value(),
                      shear.checkboxes[0]->isChecked());
+    canvas->setInterpolation(interpolation.selectedType());
   }
 }
 
