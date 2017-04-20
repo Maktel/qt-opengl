@@ -27,12 +27,14 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     canvas.cpp \
     drawer.cpp \
-    debugwindow.cpp
+    debugwindow.cpp \
+    uihelpers.cpp
 
 HEADERS  += mainwindow.h \
     canvas.h \
     drawer.h \
-    debugwindow.h
+    debugwindow.h \
+    uihelpers.h
 
 CONFIG += mobility
 MOBILITY = 
