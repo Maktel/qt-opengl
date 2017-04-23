@@ -2,6 +2,10 @@
 
 ![main window screenshot](https://raw.githubusercontent.com/Maktel/qt-opengl/master/promo.png)
 
+## Note on usage:
+All actions can be executed using top bar menu or by keyboard shortcuts. Operations like drawing or filling require using mouse to mark points. In addition to this, functions with unlimited number of points like drawing polygon or basis spline require user to **press Space** or use context menu (invoked with RMB) to apply points selection. Gradient painting and image transformations are applied **immediately** after being triggered.
+Application also provides examples with preconfigured sets of actions. User can enable them by focusing canvas with mouse click and pressing **number keys (1 - 4)**. Some of the examples create addition debugging window to visualise internals of drawing functions and algorithms they use.
+
 ## List of features:
 * loading a file
 * saving to a file
@@ -29,7 +33,7 @@
 * shearing (relative to (0, 0) or centre of the image)
 * interpolation (nearest neighbour, bilinear)
 
-### TODO features:
+## TODO features:
 * drawing grid in another widget instead of directly in the image
 * improved transformations interface (ability to set up transformations with command line like utility)
 * more antialiasing functions
