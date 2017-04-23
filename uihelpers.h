@@ -4,13 +4,17 @@
 #include <QtWidgets>
 
 struct ColorPicker : public QWidget {
+ private:
+  Q_OBJECT
+
+ public:
   QPushButton* button;
   QColor* color;
   QLabel* label;
   QGridLayout* layout;
 
   ColorPicker(QColor* _color, QString button_text);
-  ~ColorPicker();
+  virtual ~ColorPicker();
 };
 
 class Separator : public QFrame {
@@ -29,7 +33,7 @@ struct Inputs : public QWidget {
   QLabel* main_label = nullptr;
   QVector<QCheckBox*> checkboxes;
 
-  Inputs(QString label_text);
+  Inputs(QString label_text = QString());
   void addIntInput(int min, int val, int max);
   void addDoubleInput(qreal min, qreal val, qreal max);
   void addLabel(QString label_text);
@@ -40,6 +44,8 @@ struct Inputs : public QWidget {
 };
 
 class DialogStandardButtons : public QDialogButtonBox {
+ private:
+  Q_OBJECT
  public:
   DialogStandardButtons(QWidget* parent);
 };
@@ -106,8 +112,7 @@ struct ButtonBox : public QWidget {
   }
 
   ~ButtonBox() {
-    foreach (auto& o, buttons)
-      delete o;
+    for (int i = buttons.size() - 1; i >= 0; --i) delete buttons[i];
     if (label != nullptr) delete label;
     delete box_layout;
     delete box;

@@ -5,13 +5,20 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
   QWidget* main_widget = new QWidget;
   setCentralWidget(main_widget);
 
+  QScrollArea* scrollArea = new QScrollArea;
+
   // create main part of the window
   canvas = new Canvas(this);
   canvas->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
   QVBoxLayout* layout = new QVBoxLayout;
   layout->setMargin(5);
-  layout->addWidget(canvas);
+
+  scrollArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  scrollArea->setWidget(canvas);
+  layout->addWidget(scrollArea);
+
+  //  layout->addWidget(canvas);
   main_widget->setLayout(layout);
 
   createActions();
@@ -26,10 +33,14 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
   // TODO Create custom QStatusBar and overload clearMessage() with help text
   //  QLabel* perm_label = new QLabel(tr("Press Space to draw"));
   //  statusBar()->addPermanentWidget(perm_label, 0);
+  perm_label = new QLabel(tr("Press Space or RBM to draw shape"));
 
   setWindowTitle(tr("Marek \u0141uszczki OpenGL"));
   setMinimumSize(200, 200);
-  resize(600, 600);
+  resize(900, 900);
+
+  connect(canvas, SIGNAL(changedSetupMode(bool)), this,
+          SLOT(setContextMenu(bool)));
 }
 
 void MainWindow::createActions() {
@@ -60,6 +71,12 @@ void MainWindow::createActions() {
   mode_click_act->setStatusTip(tr("Default, simple click mode"));
   connect(mode_click_act, &QAction::triggered, this, &MainWindow::modeClick);
 
+  clear_canvas_act = new QAction(tr("Clea&r canvas"), this);
+  clear_canvas_act->setShortcut(QKeySequence(tr("Y")));
+  clear_canvas_act->setStatusTip(tr("Set canvas color to white"));
+  connect(clear_canvas_act, &QAction::triggered, this,
+          [&]() { canvas->clear(); });
+
   switch_debug_act = new QAction(tr("&Debug"), this);
   switch_debug_act->setCheckable(true);
   switch_debug_act->setShortcut(QKeySequence(tr("D")));
@@ -75,7 +92,7 @@ void MainWindow::createActions() {
       tr("Enable grid for alignment debugging purposes"));
   connect(switch_grid_act, &QAction::triggered, this, &MainWindow::switchGrid);
 
-  change_scale_act = new QAction(tr("&Scale"));
+  change_scale_act = new QAction(tr("&Zoom"));
   change_scale_act->setShortcut(QKeySequence(tr("Z")));
   change_scale_act->setStatusTip(
       tr("Change zoom display level (does not affect image)"));
@@ -200,7 +217,14 @@ void MainWindow::createActions() {
   about_qt_act->setStatusTip(tr("Display information about Qt"));
   connect(about_qt_act, &QAction::triggered, this, &QApplication::aboutQt);
 
+
   // OTHER
+  // invisible holder for empty state
+  mode_none_act = new QAction(tr("__Mode::none__"));
+  mode_none_act->setCheckable(true);
+  connect(canvas, &Canvas::changedToDefaultMode, this,
+          &MainWindow::setDefaultMode);
+
   mode_group = new QActionGroup(this);
   mode_group->addAction(mode_click_act);
   mode_group->addAction(mode_line_act);
@@ -211,6 +235,7 @@ void MainWindow::createActions() {
   mode_group->addAction(mode_fill_act);
   mode_group->addAction(mode_hgradient_act);
   mode_group->addAction(mode_vgradient_act);
+  mode_group->addAction(mode_none_act);
   mode_click_act->setChecked(true);
 }
 
@@ -225,9 +250,11 @@ void MainWindow::createMenus() {
   general_menu = menuBar()->addMenu(tr("&General"));
   general_menu->menuAction()->setStatusTip(tr("Core functionalities"));
   general_menu->addAction(mode_click_act);
+  general_menu->addAction(clear_canvas_act);
   general_menu->addAction(switch_debug_act);
   general_menu->addAction(switch_grid_act);
   general_menu->addAction(change_scale_act);
+  general_menu->addSeparator();
   general_menu->addAction(settings_general_act);
 
   draw_menu = menuBar()->addMenu(tr("&Draw"));
@@ -263,11 +290,40 @@ void MainWindow::createMenus() {
   about_menu->menuAction()->setStatusTip(tr("Get help about this application"));
   about_menu->addAction(about_act);
   about_menu->addAction(about_qt_act);
+  //  about_menu->addAction(mode_none_act);
 }
+
+void MainWindow::setDefaultMode() { mode_none_act->setChecked(true); }
+
+void MainWindow::setContextMenu(bool _setup) {
+  setup = _setup;
+  if (setup) {
+    statusBar()->addPermanentWidget(perm_label, 0);
+    perm_label->show();
+  } else {
+    statusBar()->removeWidget(perm_label);
+  }
+}
+
+#ifndef QT_NO_CONTEXTMENU
+void MainWindow::contextMenuEvent(QContextMenuEvent* event) {
+  // setup draw in context menu
+  QAction* setup_draw_act = new QAction(tr("Draw set up shape"));
+  setup_draw_act->setStatusTip(
+      tr("Complete drawing shape that has points set up for"));
+  connect(setup_draw_act, &QAction::triggered, this,
+          [&]() { canvas->applySetupDraw(); });
+  setup_draw_act->setDisabled(!setup);
+
+  QMenu menu(this);
+  menu.addAction(setup_draw_act);
+  menu.exec(event->globalPos());
+}
+#endif  // QT_NO_CONTEXTMENU
 
 
 /*  ------------------------------------------------------------------------  */
-/*  SLOTS  */
+/*  MENU SLOTS  */
 
 void MainWindow::quit() { QApplication::quit(); }
 
@@ -327,8 +383,8 @@ void MainWindow::changeScale() {
 
   QSlider zoom_slider(Qt::Horizontal, &dialog);
   const int multiplier = 6;
-  zoom_slider.setRange(1, 4 * multiplier);
-  zoom_slider.setValue(multiplier * canvas->settings.scale);
+  zoom_slider.setRange(1, 7 * multiplier);
+  zoom_slider.setValue(multiplier * canvas->settings.zoom);
   zoom_slider.setTickInterval(multiplier);
   zoom_slider.setTickPosition(QSlider::TicksBelow);
   form.addWidget(&zoom_slider);
@@ -342,11 +398,17 @@ void MainWindow::changeScale() {
         QString::number(zoom_slider.value() * 1.0 / multiplier, 'g', 2));
   });
 
+  QLabel warning_label(
+      tr("High zoom levels will severely degrade performance. Use for "
+         "debugging purposes only."));
+  warning_label.setWordWrap(true);
+  form.addWidget(&warning_label);
+
 
   form.addWidget(new DialogStandardButtons(&dialog));
 
   if (dialog.exec() == QDialog::Accepted) {
-    canvas->setScale(zoom_slider.value() * 1.0 / multiplier);
+    canvas->setZoom(zoom_slider.value() * 1.0 / multiplier);
   }
 }
 
@@ -424,7 +486,7 @@ void MainWindow::settingsDraw() {
   // number of circle steps when approximating
   Inputs inputs("Number of steps in circle approximation");
   inputs.addLabel(tr("Steps: "));
-  inputs.addIntInput(1, canvas->settings.circle_steps, 128);
+  inputs.addIntInput(3, canvas->settings.circle_steps, 128);
   inputs.switchInputs(!circle_buttons.buttons[1]->isChecked());
   connect(
       circle_buttons.buttons[1], &TypeRadioButton<CircleType>::toggled, this,
@@ -437,18 +499,22 @@ void MainWindow::settingsDraw() {
   if (dialog.exec() == QDialog::Accepted) {
     canvas->setMainColor(draw_color);
 
-    canvas->setLineMode(line_buttons.selectedType());
+    canvas->setLineType(line_buttons.selectedType());
 
     CircleType circle_type = circle_buttons.selectedType();
-    canvas->setCircleMode(circle_type);
+    canvas->setCircleType(circle_type);
     if (circle_type == CircleType::approximated)
       canvas->setCircleSteps(inputs.ints[0]->value());
   }
 }
 
 void MainWindow::modeFill() { canvas->setMode(Mode::fill); }
-void MainWindow::modeHGradient() { canvas->setMode(Mode::hgradient); }
-void MainWindow::modeVGradient() { canvas->setMode(Mode::vgradient); }
+void MainWindow::modeHGradient() {
+  canvas->applyOperation(Operation::hgradient);
+}
+void MainWindow::modeVGradient() {
+  canvas->applyOperation(Operation::vgradient);
+}
 
 void MainWindow::settingsPaint() {
   QDialog dialog(this);
@@ -523,20 +589,27 @@ void MainWindow::settingsPaint() {
   form.addWidget(&gradient);
 
 
+  Inputs gradient_steps;
+  gradient_steps.addLabel(tr("Steps in gradient: "));
+  gradient_steps.addIntInput(1, canvas->settings.gradient_steps, 255);
+  form.addWidget(&gradient_steps);
+
+
   form.addWidget(new DialogStandardButtons(&dialog));
 
   if (dialog.exec() == QDialog::Accepted) {
     canvas->setFillSettings(fill_random, fill_color,
                             fill_buttons.selectedType());
 
-    canvas->setGradientSettings(start_color, end_color);
+    canvas->setGradientSettings(start_color, end_color,
+                                gradient_steps.ints[0]->value());
   }
 }
 
-void MainWindow::trShift() {}
-void MainWindow::trRotate() {}
-void MainWindow::trScale() {}
-void MainWindow::trShear() {}
+void MainWindow::trShift() { canvas->applyOperation(Operation::shift); }
+void MainWindow::trRotate() { canvas->applyOperation(Operation::rotate); }
+void MainWindow::trScale() { canvas->applyOperation(Operation::scale); }
+void MainWindow::trShear() { canvas->applyOperation(Operation::shear); }
 
 void MainWindow::settingsTr() {
   QDialog dialog(this);
@@ -614,7 +687,7 @@ void MainWindow::settingsTr() {
                      scale.checkboxes[0]->isChecked());
     canvas->setShear(shear.doubles[0]->value(), shear.doubles[1]->value(),
                      shear.checkboxes[0]->isChecked());
-    canvas->setInterpolation(interpolation.selectedType());
+    canvas->setInterpolationType(interpolation.selectedType());
   }
 }
 

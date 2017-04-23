@@ -46,7 +46,7 @@ Separator::Separator() : QFrame() {
 
 Inputs::Inputs(QString label_text) {
   layout = new QVBoxLayout(this);
-  setMainLabel(label_text);
+  if (!label_text.isEmpty()) setMainLabel(label_text);
 
   fields = new QWidget;
   fields_layout = new QHBoxLayout(fields);
@@ -102,14 +102,10 @@ void Inputs::switchInputs(bool on_off) {
 }
 
 Inputs::~Inputs() {
-  foreach (auto& o, ints)
-    delete o;
-  foreach (auto& o, doubles)
-    delete o;
-  foreach (auto& o, labels)
-    delete o;
-  foreach (auto& o, checkboxes)
-    delete o;
+  for (int i = ints.size() - 1; i >= 0; --i) delete ints[i];
+  for (int i = doubles.size() - 1; i >= 0; --i) delete doubles[i];
+  for (int i = labels.size() - 1; i >= 0; --i) delete labels[i];
+  for (int i = checkboxes.size() - 1; i >= 0; --i) delete checkboxes[i];
   if (main_label != nullptr) delete main_label;
   delete layout;
   delete fields_layout;

@@ -34,7 +34,8 @@ HEADERS  += mainwindow.h \
     canvas.h \
     drawer.h \
     debugwindow.h \
-    uihelpers.h
+    uihelpers.h \
+    settings.h
 
 CONFIG += mobility
 MOBILITY = 

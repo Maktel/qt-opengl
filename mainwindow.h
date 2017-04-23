@@ -5,6 +5,8 @@
 #include "canvas.h"
 #include "uihelpers.h"
 
+class Canvas;
+
 class MainWindow : public QMainWindow {
   Q_OBJECT
 
@@ -12,7 +14,13 @@ class MainWindow : public QMainWindow {
   MainWindow(QWidget* parent = 0);
 
  protected:
+  void contextMenuEvent(QContextMenuEvent* event);
+
  private slots:
+  void setDefaultMode();
+  void setContextMenu(bool _setup);
+
+  /*  MENU SLOTS  */
   void loadFile();
   void saveFile();
   void quit();
@@ -46,9 +54,13 @@ class MainWindow : public QMainWindow {
  private:
   Canvas* canvas;
   bool debug = false;
+  bool setup = false;
+  QLabel* perm_label;
 
   void createActions();
   void createMenus();
+
+  QAction* mode_none_act;
 
   QMenu* file_menu;
   QMenu* general_menu;
@@ -63,6 +75,7 @@ class MainWindow : public QMainWindow {
   QAction* quit_act;
 
   QAction* mode_click_act;
+  QAction* clear_canvas_act;
   QAction* switch_debug_act;
   QAction* switch_grid_act;
   QAction* change_scale_act;
