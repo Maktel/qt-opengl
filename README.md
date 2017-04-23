@@ -4,7 +4,8 @@
 
 ## Note on usage:
 All actions can be executed using top bar menu or by keyboard shortcuts. Operations like drawing or filling require using mouse to mark points. In addition to this, functions with unlimited number of points like drawing polygon or basis spline require user to **press Space** or use context menu (invoked with RMB) to apply points selection. Gradient painting and image transformations are applied **immediately** after being triggered.
-Application also provides examples with preconfigured sets of actions. User can enable them by focusing canvas with mouse click and pressing **number keys (1 - 4)**. Some of the examples create addition debugging window to visualise internals of drawing functions and algorithms they use.
+
+Application also **provides examples with preconfigured sets of actions**. User can enable them by focusing canvas with mouse click and pressing **number keys (1 - 4)**. Some of the examples create addition debugging window to visualise internals of drawing functions and algorithms they use.
 
 ## List of features:
 * loading a file
